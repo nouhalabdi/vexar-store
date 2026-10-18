@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEXAR — لوحة التحكم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#fff; --ink:#0a0a0a; --ink-soft:#666;
+  --gold:#c9a24b; --gold-light:#e0c37b; --gold-dark:#a17d29;
+  --line:#e2e6ea; --success:#27ae60; --danger:#e74c3c; --warning:#f39c12; --info:#3498db;
+  --shadow:0 4px 24px rgba(10,10,10,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+.en{font-family:'Playfair Display',serif}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit}
+
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 100%);z-index:9999;display:grid;place-items:center;padding:20px}
+.login-box{background:var(--surface);border-radius:20px;padding:46px 40px;max-width:420px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo svg{width:64px;height:64px;margin:0 auto 14px}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:24px;letter-spacing:4px}
+.login-logo p{font-size:12px;color:var(--ink-soft);letter-spacing:2px;margin-top:4px}
+.login-box h2{text-align:center;font-size:18px;margin-bottom:26px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-weight:700;font-size:13px;margin-bottom:8px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;outline:none;transition:.2s;background:#fff}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.1)}
+.login-error{color:var(--danger);font-size:13px;margin-bottom:12px;text-align:center;display:none;padding:10px;background:rgba(231,76,60,.08);border-radius:8px}
+.login-error.show{display:block}
+
+.btn{padding:12px 22px;border-radius:8px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:.2s;cursor:pointer;border:none}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:var(--gold-dark)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.85}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{opacity:.85}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-block{width:100%;justify-content:center;padding:15px}
+
+.admin-layout{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#0a0a0a;color:#fff;padding:30px 20px;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;right:0;z-index:100}
+.sidebar .logo{display:flex;align-items:center;gap:12px;margin-bottom:44px;padding:0 8px}
+.sidebar .logo svg{width:38px;height:38px}
+.sidebar .logo .en{font-size:18px;letter-spacing:3px}
+.sidebar .logo .ar{font-size:10px;color:var(--gold-light);letter-spacing:4px;display:block;margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:.2s;color:#aaa;font-weight:600;font-size:14px}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:var(--gold);color:#fff}
+.nav-item svg{width:20px;height:20px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding-top:20px;border-top:1px solid #1e1e1e}
+.sidebar-user{padding:12px 8px;color:#ccc;font-size:13px;margin-bottom:8px}
+.sidebar-user strong{color:#fff;display:block;font-size:14px}
+.logout-btn{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;color:#999;font-weight:600;font-size:14px;cursor:pointer;width:100%;transition:.2s}
+.logout-btn:hover{background:rgba(231,76,60,.1);color:var(--danger)}
+
+.main{margin-right:260px;flex:1;padding:32px 40px;min-height:100vh;width:calc(100% - 260px);padding-bottom:0}
+.main-content{padding-bottom:40px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:14px}
+.header h1{font-size:26px;font-weight:900}
+.header p{color:var(--ink-soft);font-size:14px;margin-top:4px}
+.header-right{display:flex;align-items:center;gap:12px}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap}
+.admin-avatar{width:42px;height:42px;border-radius:50%;background:var(--gold);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:32px}
+.stat-card{background:var(--surface);border-radius:14px;padding:24px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;transition:.25s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(10,10,10,.1)}
+.stat-icon{width:54px;height:54px;border-radius:12px;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.stat-icon.gold{background:rgba(201,162,75,.15);color:var(--gold-dark)}
+.stat-icon.green{background:rgba(39,174,96,.13);color:var(--success)}
+.stat-icon.blue{background:rgba(52,152,219,.13);color:var(--info)}
+.stat-icon.orange{background:rgba(243,156,18,.13);color:var(--warning)}
+.stat-info h3{font-size:24px;font-weight:900;margin-bottom:2px;line-height:1.2}
+.stat-info span{font-size:13px;color:var(--ink-soft)}
+
+.panel{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);margin-bottom:28px;overflow:hidden}
+.panel-head{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.panel-head h3{font-size:17px;font-weight:800}
+.panel-head small{color:var(--ink-soft);font-size:13px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{text-align:right;padding:14px 20px;font-size:12px;color:var(--ink-soft);font-weight:800;background:#fafbfc;letter-spacing:.5px;white-space:nowrap}
+td{padding:14px 20px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+tr:hover td{background:#fafbfc}
+.product-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#f0ece4}
+.product-thumb-cell{display:flex;align-items:center;gap:12px}
+.product-name-cell{font-weight:700;font-size:14px}
+
+.badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800;display:inline-block;white-space:nowrap}
+.badge-pending{background:#fff3cd;color:#856404}
+.badge-confirmed{background:#cce5ff;color:#004085}
+.badge-shipped{background:#d1ecf1;color:#0c5460}
+.badge-delivered{background:#d4edda;color:#155724}
+.badge-cancelled{background:#f8d7da;color:#721c24}
+
+.status-select{padding:7px 12px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:700;background:#fff;cursor:pointer;font-family:inherit}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;place-items:center;padding:20px;backdrop-filter:blur(4px)}
+.modal.show{display:grid;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--surface);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:38px 34px;position:relative;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:14px;left:14px;width:36px;height:36px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:16px;transition:.2s}
+.modal-close:hover{background:var(--ink);color:#fff}
+.modal-box h2{font-size:20px;margin-bottom:24px;font-weight:900}
+
+.order-detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.order-detail-row:last-child{border-bottom:none}
+.order-detail-row strong{font-weight:800}
+.order-items-list{margin:16px 0}
+.order-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+.order-item img{width:48px;height:48px;border-radius:8px;object-fit:cover}
+.order-item-info{flex:1;font-size:13px}
+.order-item-info strong{display:block;margin-bottom:2px}
+.order-item-info small{color:var(--ink-soft);font-size:11px}
+.order-item-price{font-weight:800;color:var(--gold-dark);font-size:13px}
+
+.delivery-row-input{width:110px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:13px;text-align:center;outline:none;transition:.2s}
+.delivery-row-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,162,75,.1)}
+.delivery-name-input{padding:8px 12px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:13px;width:100%;outline:none;transition:.2s}
+.delivery-name-input:focus{border-color:var(--gold)}
+
+.alert-box{background:rgba(52,152,219,.1);border-right:4px solid var(--info);padding:14px 18px;border-radius:8px;margin-bottom:22px;font-size:13px;color:#0c5460}
+.alert-box strong{display:block;margin-bottom:4px}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+.empty-state svg{width:70px;height:70px;opacity:.25;margin:0 auto 16px}
+.empty-state p{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-state small{font-size:13px}
+
+.admin-footer{margin-right:260px;padding:22px 40px;border-top:1px solid var(--line);background:var(--surface);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--ink-soft)}
+.admin-footer a{color:var(--gold-dark);font-weight:800;text-decoration:none;transition:.2s}
+.admin-footer a:hover{color:var(--gold)}
+
+.loading{display:grid;place-items:center;padding:40px 20px;color:var(--ink-soft)}
+.spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+  .sidebar{width:100%;position:relative;flex-direction:row;flex-wrap:wrap;padding:15px;gap:6px;height:auto;right:auto}
+  .sidebar .logo{margin-bottom:0;margin-left:12px}
+  .sidebar .logo svg{width:32px;height:32px}
+  .sidebar .logo .en{font-size:16px}
+  .nav-item{margin-bottom:0;padding:10px 14px;font-size:13px}
+  .sidebar-footer{margin-top:0;padding-top:0;border:none;margin-right:auto}
+  .sidebar-user{display:none}
+  .main{margin-right:0;width:100%;padding:20px}
+  .admin-footer{margin-right:0;padding:20px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .header h1{font-size:20px}
+}
+@media(max-width:560px){
+  .stats-grid{grid-template-columns:1fr}
+  th,td{padding:10px 12px;font-size:12px}
+  .modal-box{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 120 120"><path d="M60 6 L108 24 L108 64 Q108 96 60 114 Q12 96 12 64 L12 24 Z" fill="#0a0a0a" stroke="#c9a24b" stroke-width="3"/><path d="M32 36 L60 88 L88 36" fill="none" stroke="#c9a24b" stroke-width="8" stroke-linecap="round"/></svg>
+      <h1>VEXAR</h1>
+      <p>ADMIN PANEL</p>
+    </div>
+    <h2>تسجيل الدخول</h2>
+    <div class="login-error" id="loginError"></div>
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input type="text" id="loginUser" placeholder="أدخل اسم المستخدم" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeypress="if(event.key==='Enter')login()">
+    </div>
+    <button class="btn btn-primary btn-block" id="loginBtn" onclick="login()">دخول</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminRoot" style="display:none">
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo">
+        <svg viewBox="0 0 120 120"><path d="M60 6 L108 24 L108 64 Q108 96 60 114 Q12 96 12 64 L12 24 Z" fill="#0a0a0a" stroke="#c9a24b" stroke-width="3"/><path d="M32 36 L60 88 L88 36" fill="none" stroke="#c9a24b" stroke-width="8" stroke-linecap="round"/></svg>
+        <div><span class="en">VEXAR</span><span class="ar">ADMIN</span></div>
+      </div>
+      <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        لوحة القيادة
+      </div>
+      <div class="nav-item" data-section="products" onclick="showSection('products', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+        المنتجات
+      </div>
+      <div class="nav-item" data-section="orders" onclick="showSection('orders', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        الطلبات <span id="ordersBadge" style="background:var(--danger);color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;margin-right:auto;display:none"></span>
+      </div>
+      <div class="nav-item" data-section="delivery" onclick="showSection('delivery', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14l-1.5-6.5H6.5L5 17Z"/><circle cx="7" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 7h2l2 4"/></svg>
+        أسعار التوصيل
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">مرحباً، <strong id="adminNameDisplay">Admin</strong></div>
+        <button class="logout-btn" onclick="logout()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+          تسجيل الخروج
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-content">
+        <!-- DASHBOARD -->
+        <section id="section-dashboard">
+          <div class="header">
+            <div><h1>لوحة القيادة</h1><p>نظرة عامة على أداء متجرك</p></div>
+            <div class="header-right"><div class="admin-avatar" id="avatarLetter">A</div></div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon gold">📦</div><div class="stat-info"><h3 id="totalProducts">0</h3><span>المنتجات</span></div></div>
+            <div class="stat-card"><div class="stat-icon green">🛒</div><div class="stat-info"><h3 id="totalOrders">0</h3><span>إجمالي الطلبات</span></div></div>
+            <div class="stat-card"><div class="stat-icon blue">💰</div><div class="stat-info"><h3 id="totalRevenue">0 دج</h3><span>الإيرادات</span></div></div>
+            <div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><h3 id="pendingOrders">0</h3><span>قيد الانتظار</span></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>آخر الطلبات</h3><small>آخر 5 طلبات</small></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الولاية</th><th>التوصيل</th><th>المجموع</th><th>الحالة</th></tr></thead>
+              <tbody id="recentOrdersBody"></tbody>
+            </table></div>
+          </div>
+        </section>
+
+        <!-- PRODUCTS -->
+        <section id="section-products" style="display:none">
+          <div class="header">
+            <div><h1>المنتجات</h1><p>إدارة كاملة لمنتجات متجرك</p></div>
+            <div class="header-actions">
+              <button class="btn btn-outline" onclick="seedProducts()">⚡ إضافة المنتجات الافتراضية</button>
+              <button class="btn btn-primary" onclick="openProductForm()">+ إضافة منتج</button>
+            </div>
+          </div>
+          <div class="alert-box"><strong>💡 معلومة</strong>يمكنك إضافة/تعديل/حذف المنتجات وصورها في أي وقت. زر "إضافة المنتجات الافتراضية" يستعيد المنتجات الأصلية مع صورها.</div>
+          <div class="panel">
+            <div class="panel-head"><h3>قائمة المنتجات</h3><small id="productsCount"></small></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>المنتج</th><th>التصنيف</th><th>السعر</th><th>السعر القديم</th><th>الشارة</th><th>الإجراءات</th></tr></thead>
+              <tbody id="productsTableBody"></tbody>
+            </table></div>
+          </div>
+        </section>
+
+        <!-- ORDERS -->
+        <section id="section-orders" style="display:none">
+          <div class="header">
+            <div><h1>الطلبات</h1><p>إدارة ومتابعة جميع طلبات العملاء</p></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>جميع الطلبات</h3><small id="ordersCount"></small></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>الطلب</th><th>التاريخ</th><th>العميل</th><th>الهاتف</th><th>الولاية</th><th>التوصيل</th><th>المجموع</th><th>الحالة</th><th>إجراء</th></tr></thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table></div>
+          </div>
+        </section>
+
+        <!-- DELIVERY -->
+        <section id="section-delivery" style="display:none">
+          <div class="header">
+            <div><h1>أسعار التوصيل</h1><p>تحكم كامل بأسعار التوصيل لكل ولاية</p></div>
+            <div class="header-actions">
+              <button class="btn btn-outline" onclick="seedWilayas()">⚡ إضافة الولايات الافتراضية</button>
+              <button class="btn btn-outline" onclick="addWilaya()">+ إضافة ولاية</button>
+              <button class="btn btn-primary" onclick="saveDelivery()">💾 حفظ التغييرات</button>
+            </div>
+          </div>
+          <div class="alert-box"><strong>💡 معلومة</strong>عدّل أسعار التوصيل للمنزل والمكتب لكل ولاية، ثم اضغط "حفظ التغييرات". التحديث يظهر فوراً في المتجر.</div>
+          <div class="panel">
+            <div class="panel-head"><h3>جدول الأسعار</h3><small id="deliveryCount"></small></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>#</th><th>الولاية</th><th>المنزل (دج)</th><th>المكتب (دج)</th><th>حذف</th></tr></thead>
+              <tbody id="deliveryTableBody"></tbody>
+            </table></div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="admin-footer">
+        <span>VEXAR Admin Panel © 2026 — جميع الحقوق محفوظة</span>
+        <span>برمجة وتطوير <a href="https://www.facebook.com/profile.php?id=61590728369782" target="_blank" rel="noopener">NL Dev</a></span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<!-- PRODUCT FORM MODAL -->
+<div class="modal" id="productFormModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeProductForm()">✕</button>
+    <h2 id="productFormTitle">إضافة منتج جديد</h2>
+    <form id="productForm" onsubmit="saveProduct(event)">
+      <input type="hidden" id="productId">
+      <div class="form-group"><label>اسم المنتج *</label><input type="text" id="productName" required placeholder="مثال: أوكسفورد كلاسيك"></div>
+      <div class="form-group"><label>التصنيف *</label>
+        <select id="productCat" required>
+          <option value="classic">كلاسيك</option>
+          <option value="sneakers">سنيكرز</option>
+          <option value="formal">رسمي</option>
+          <option value="loafers">لوفر</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>السعر (دج) *</label><input type="number" id="productPrice" required min="0" placeholder="12500"></div>
+        <div class="form-group"><label>السعر القديم</label><input type="number" id="productOldPrice" min="0" placeholder="اختياري"></div>
+      </div>
+      <div class="form-group"><label>رابط الصورة</label><input type="url" id="productImg" placeholder="https://..."></div>
+      <div class="form-group"><label>الوصف</label><textarea id="productDesc" rows="3" placeholder="وصف تفصيلي للمنتج..."></textarea></div>
+      <div class="form-group"><label>الشارة (اختياري)</label><input type="text" id="productBadge" placeholder="جديد، خصم، الأكثر مبيعاً..."></div>
+      <button type="submit" class="btn btn-primary btn-block" id="productSaveBtn">حفظ المنتج</button>
+    </form>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal" id="orderDetailModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeOrderDetail()">✕</button>
+    <h2>تفاصيل الطلب</h2>
+    <div id="orderDetailBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   FILE PROTOCOL CHECK
+   ============================================================ */
+if(window.location.protocol === 'file:'){
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:grid;place-items:center;padding:20px;font-family:Cairo,sans-serif;background:#0a0a0a;color:#fff;text-align:center">
+      <div style="max-width:500px">
+        <div style="font-size:60px;margin-bottom:20px">⚠️</div>
+        <h1 style="font-size:24px;margin-bottom:16px">لا يمكن فتح اللوحة مباشرة</h1>
+        <p style="color:#aaa;margin-bottom:20px;line-height:1.8">يجب فتح لوحة التحكم عبر الخادم، وليس بالنقر المباشر على الملف.</p>
+        <div style="background:#1a1a1a;padding:16px;border-radius:10px;margin-bottom:20px">
+          <p style="font-size:13px;color:#888;margin-bottom:8px">1. شغل الخادم في Terminal:</p>
+          <code style="color:#c9a24b;font-size:14px">node server.js</code>
+        </div>
+        <div style="background:#1a1a1a;padding:16px;border-radius:10px">
+          <p style="font-size:13px;color:#888;margin-bottom:8px">2. افتح الرابط في المتصفح:</p>
+          <code style="color:#c9a24b;font-size:14px">http://localhost:3000/admin</code>
+        </div>
+      </div>
+    </div>`;
+  throw new Error('File protocol not supported');
+}
+
+/* ============================================================
+   API HELPERS
+   ============================================================ */
+function getToken(){ return localStorage.getItem('vexar_token'); }
+function authHeaders(){
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + (getToken() || '')
+  };
+}
+
+async function apiFetch(url, options = {}){
+  const res = await fetch(url, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) }
+  });
+  if(res.status === 401){
+    logout(true);
+    throw new Error('انتهت الجلسة، سجل الدخول من جديد');
+  }
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `فشل الطلب (${res.status})`);
+  }
+  return res.json();
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+async function login(){
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if(!username || !password){
+    errEl.textContent = 'املأ جميع الحقول';
+    errEl.classList.add('show');
+    return;
+  }
+
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'جارٍ التحقق...';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    if(!res.ok){
+      const errData = await res.json().catch(() => ({}));
+      if(res.status === 401){
+        errEl.textContent = errData.error || 'اسم المستخدم أو كلمة المرور غير صحيحة';
+      } else if(res.status === 400){
+        errEl.textContent = errData.error || 'بيانات ناقصة';
+      } else {
+        errEl.textContent = `خطأ في الخادم (${res.status}): ${errData.error || 'غير معروف'}`;
+      }
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'دخول';
+      return;
+    }
+
+    const data = await res.json();
+    localStorage.setItem('vexar_token', data.token);
+    localStorage.setItem('vexar_admin_name', data.admin.name);
+    showAdmin();
+  } catch(err){
+    console.error('Login error:', err);
+    errEl.textContent = 'خطأ في الاتصال بالخادم — تأكد من تشغيل node server.js';
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'دخول';
+  }
+}
+
+function logout(force){
+  if(!force && !confirm('تسجيل الخروج؟')) return;
+  localStorage.removeItem('vexar_token');
+  localStorage.removeItem('vexar_admin_name');
+  location.reload();
+}
+
+function showAdmin(){
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('adminRoot').style.display = 'block';
+  const name = localStorage.getItem('vexar_admin_name') || 'Admin';
+  document.getElementById('adminNameDisplay').textContent = name;
+  document.getElementById('avatarLetter').textContent = name.charAt(0).toUpperCase();
+  initAdmin();
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let adminProducts = [];
+let adminOrders = [];
+let adminDelivery = [];
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function showSection(name, el){
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+  document.getElementById('section-' + name).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  if(name === 'dashboard') renderDashboard();
+  if(name === 'products') renderProductsTable();
+  if(name === 'orders') renderOrdersTable();
+  if(name === 'delivery') renderDeliveryTable();
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function loadDashboard(){
+  try {
+    const [products, orders] = await Promise.all([
+      fetch('/api/products').then(r => r.json()),
+      apiFetch('/api/orders')
+    ]);
+    adminProducts = products;
+    adminOrders = orders;
+
+    const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s,o) => s + o.total, 0);
+    document.getElementById('totalProducts').textContent = products.length;
+    document.getElementById('totalOrders').textContent = orders.length;
+    document.getElementById('totalRevenue').textContent = revenue.toLocaleString('ar-DZ') + ' دج';
+    const pending = orders.filter(o => o.status === 'pending').length;
+    document.getElementById('pendingOrders').textContent = pending;
+
+    const badge = document.getElementById('ordersBadge');
+    if(pending > 0){ badge.textContent = pending; badge.style.display = 'inline-block'; }
+    else badge.style.display = 'none';
+
+    renderDashboard();
+  } catch(err){
+    console.error(err);
+    flash('❌ فشل تحميل بيانات لوحة القيادة');
+  }
+}
+
+function renderDashboard(){
+  const recent = adminOrders.slice(0, 5);
+  document.getElementById('recentOrdersBody').innerHTML = recent.length ? recent.map(o => `
+    <tr>
+      <td><strong>${o.orderId}</strong></td>
+      <td>${o.customer.name}</td>
+      <td>${o.customer.wilaya}</td>
+      <td>${o.customer.deliveryType === 'home' ? '🏠 منزل' : '🏢 مكتب'}</td>
+      <td>${o.total.toLocaleString('ar-DZ')} دج</td>
+      <td><span class="badge badge-${o.status}">${statusLabel(o.status)}</span></td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:40px">لا توجد طلبات بعد</td></tr>';
+}
+
+function statusLabel(s){
+  return {pending:'قيد الانتظار', confirmed:'مؤكد', shipped:'تم الشحن', delivered:'تم التسليم', cancelled:'ملغي'}[s] || s;
+}
+
+/* ============================================================
+   PRODUCTS
+   ============================================================ */
+async function loadProducts(){
+  try {
+    const res = await fetch('/api/products');
+    adminProducts = await res.json();
+    renderProductsTable();
+  } catch(err){
+    flash('❌ فشل تحميل المنتجات');
+  }
+}
+
+function renderProductsTable(){
+  document.getElementById('productsCount').textContent = `${adminProducts.length} منتج`;
+  document.getElementById('productsTableBody').innerHTML = adminProducts.length ? adminProducts.map(p => `
+    <tr>
+      <td>
+        <div class="product-thumb-cell">
+          <img class="product-thumb" src="${p.img || ''}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/100?text=?'">
+          <div class="product-name-cell">${p.name}</div>
+        </div>
+      </td>
+      <td>${p.catName}</td>
+      <td><strong>${p.price.toLocaleString('ar-DZ')} دج</strong></td>
+      <td>${p.oldPrice ? `<span style="text-decoration:line-through;color:#999">${p.oldPrice.toLocaleString('ar-DZ')} دج</span>` : '—'}</td>
+      <td>${p.badge ? `<span class="badge badge-confirmed">${p.badge}</span>` : '—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline" onclick="editProduct('${p._id}')">تعديل</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p._id}')">حذف</button>
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:40px">لا توجد منتجات — أضف منتجك الأول أو استخدم "إضافة المنتجات الافتراضية"</td></tr>';
+}
+
+function openProductForm(product = null){
+  document.getElementById('productFormModal').classList.add('show');
+  document.getElementById('productForm').reset();
+  document.getElementById('productId').value = '';
+  document.getElementById('productFormTitle').textContent = product ? 'تعديل المنتج' : 'إضافة منتج جديد';
+  if(product){
+    document.getElementById('productId').value = product._id;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productCat').value = product.cat;
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productOldPrice').value = product.oldPrice || '';
+    document.getElementById('productImg').value = product.img || '';
+    document.getElementById('productDesc').value = product.desc || '';
+    document.getElementById('productBadge').value = product.badge || '';
+  }
+}
+function closeProductForm(){ document.getElementById('productFormModal').classList.remove('show'); }
+
+async function saveProduct(e){
+  e.preventDefault();
+  const id = document.getElementById('productId').value;
+  const catMap = {classic:'كلاسيك', sneakers:'سنيكرز', formal:'رسمي', loafers:'لوفر'};
+  const cat = document.getElementById('productCat').value;
+  const product = {
+    name: document.getElementById('productName').value.trim(),
+    cat, catName: catMap[cat],
+    price: parseInt(document.getElementById('productPrice').value),
+    oldPrice: parseInt(document.getElementById('productOldPrice').value) || 0,
+    img: document.getElementById('productImg').value.trim() || '',
+    desc: document.getElementById('productDesc').value.trim(),
+    badge: document.getElementById('productBadge').value.trim()
+  };
+
+  const btn = document.getElementById('productSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'جارٍ الحفظ...';
+
+  try {
+    const url = id ? `/api/products/${id}` : '/api/products';
+    const method = id ? 'PUT' : 'POST';
+    await apiFetch(url, { method, body: JSON.stringify(product) });
+    await loadProducts();
+    await loadDashboard();
+    closeProductForm();
+    flash(id ? '✅ تم تحديث المنتج' : '✅ تم إضافة المنتج');
+  } catch(err){
+    flash('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'حفظ المنتج';
+  }
+}
+
+function editProduct(id){
+  const p = adminProducts.find(pr => pr._id === id);
+  if(p) openProductForm(p);
+}
+
+async function deleteProduct(id){
+  if(!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
+  try {
+    await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
+    await loadProducts();
+    await loadDashboard();
+    flash('🗑️ تم حذف المنتج');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+/* ============ DEFAULT PRODUCTS + SEED ============ */
+const DEFAULT_PRODUCTS = [
+  {name:'أوكسفورد كلاسيك',cat:'classic',catName:'كلاسيك',price:12500,oldPrice:15800,badge:'جديد',
+   img:'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=700&q=80',
+   desc:'حذاء أوكسفورد من الجلد الإيطالي الطبيعي، تصميم كلاسيكي خالد مع نعل جلدي مدبوغ يدوياً. مثالي للمناسبات الرسمية والعمل.'},
+  {name:'سنيكرز أوربان',cat:'sneakers',catName:'سنيكرز',price:9800,oldPrice:0,badge:'',
+   img:'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=700&q=80',
+   desc:'سنيكرز عصري بتصميم مينيمال، نعل مرن مريح لليوم الكامل. يجمع بين الأناقة والراحة اليومية.'},
+  {name:'ديربي بلاك',cat:'formal',catName:'رسمي',price:14500,oldPrice:18000,badge:'خصم',
+   img:'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=700&q=80',
+   desc:'حذاء ديربي أسود فاخر من جلد العجل الكامل، بتفاصيل يدوية دقيقة. أيقونة الأناقة الرسمية.'},
+  {name:'لوفر موناكو',cat:'loafers',catName:'لوفر',price:11200,oldPrice:0,badge:'',
+   img:'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=700&q=80',
+   desc:'لوفر بلمسة إيطالية راقية، جلد ناعم مع تفاصيل معدنية ذهبية. مثالي للإطلالات شبه الرسمية.'},
+  {name:'سنيكرز وايت كلاسيك',cat:'sneakers',catName:'سنيكرز',price:8900,oldPrice:11000,badge:'الأكثر مبيعاً',
+   img:'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=700&q=80',
+   desc:'سنيكرز أبيض كلاسيكي لا يفقد بريقه، يناسب كل الإطلالات. جلد طبيعي ونعل مطاطي متين.'},
+  {name:'شيلسي براون',cat:'classic',catName:'كلاسيك',price:13800,oldPrice:0,badge:'',
+   img:'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=700&q=80',
+   desc:'حذاء تشيلسي بلون بني دافئ، مرونة في الارتداء مع فخامة الجلد المدبوغ. عصري بلا مجهود.'},
+  {name:'أوكسفورد أوتاد',cat:'formal',catName:'رسمي',price:16800,oldPrice:0,badge:'إصدار محدود',
+   img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=700&q=80',
+   desc:'قطعة فنية بجلد أوتاد فاخر، مصنوعة يدوياً بغرز دقيقة. لسهراتك المميزة.'},
+  {name:'لوفر سويد',cat:'loafers',catName:'لوفر',price:10500,oldPrice:0,badge:'',
+   img:'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=700&q=80',
+   desc:'لوفر من جلد السويد الناعم بملمس مخملي، خفيف ومريح. أناقة كاجوال راقية.'}
+];
+
+async function seedProducts(){
+  if(!confirm(`سيتم إضافة ${DEFAULT_PRODUCTS.length} منتجات افتراضية بصورها الأصلية إلى المتجر.\n\nهل تريد المتابعة؟`)){
+    return;
+  }
+  flash('⏳ جارٍ إضافة المنتجات...');
+  let added = 0, failed = 0;
+  for(const p of DEFAULT_PRODUCTS){
+    try {
+      await apiFetch('/api/products', { method: 'POST', body: JSON.stringify(p) });
+      added++;
+    } catch(err){
+      console.error('Failed to add:', p.name, err);
+      failed++;
+    }
+  }
+  await loadProducts();
+  await loadDashboard();
+  if(failed === 0){
+    flash(`✅ تمت إضافة ${added} منتج بنجاح`);
+  } else {
+    flash(`⚠️ تمت إضافة ${added}، فشل ${failed}`);
+  }
+}
+
+/* ============================================================
+   ORDERS
+   ============================================================ */
+async function loadOrders(){
+  try {
+    adminOrders = await apiFetch('/api/orders');
+    renderOrdersTable();
+  } catch(err){
+    flash('❌ فشل تحميل الطلبات');
+  }
+}
+
+function renderOrdersTable(){
+  document.getElementById('ordersCount').textContent = `${adminOrders.length} طلب`;
+  document.getElementById('ordersTableBody').innerHTML = adminOrders.length ? adminOrders.map(o => `
+    <tr>
+      <td><strong>${o.orderId}</strong></td>
+      <td>${new Date(o.createdAt).toLocaleDateString('ar-DZ')}</td>
+      <td>${o.customer.name}</td>
+      <td dir="ltr">${o.customer.phone}</td>
+      <td>${o.customer.wilaya}</td>
+      <td>${o.customer.deliveryType === 'home' ? '🏠 منزل' : '🏢 مكتب'}</td>
+      <td><strong>${o.total.toLocaleString('ar-DZ')} دج</strong></td>
+      <td>
+        <select class="status-select" onchange="updateOrderStatus('${o._id}', this.value)">
+          <option value="pending" ${o.status==='pending'?'selected':''}>قيد الانتظار</option>
+          <option value="confirmed" ${o.status==='confirmed'?'selected':''}>مؤكد</option>
+          <option value="shipped" ${o.status==='shipped'?'selected':''}>تم الشحن</option>
+          <option value="delivered" ${o.status==='delivered'?'selected':''}>تم التسليم</option>
+          <option value="cancelled" ${o.status==='cancelled'?'selected':''}>ملغي</option>
+        </select>
+      </td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline" onclick="viewOrder('${o._id}')">عرض</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o._id}')">حذف</button>
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--ink-soft);padding:40px">لا توجد طلبات بعد</td></tr>';
+}
+
+async function updateOrderStatus(id, status){
+  try {
+    await apiFetch(`/api/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+    await loadOrders();
+    await loadDashboard();
+    flash('✅ تم تحديث حالة الطلب');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+async function deleteOrder(id){
+  if(!confirm('حذف الطلب نهائياً؟')) return;
+  try {
+    await apiFetch(`/api/orders/${id}`, { method: 'DELETE' });
+    await loadOrders();
+    await loadDashboard();
+    flash('🗑️ تم حذف الطلب');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+function viewOrder(id){
+  const o = adminOrders.find(o => o._id === id);
+  if(!o) return;
+  document.getElementById('orderDetailBody').innerHTML = `
+    <div class="order-detail-row"><span>رقم الطلب</span><strong>${o.orderId}</strong></div>
+    <div class="order-detail-row"><span>التاريخ</span><strong>${new Date(o.createdAt).toLocaleString('ar-DZ')}</strong></div>
+    <div class="order-detail-row"><span>الحالة</span><span class="badge badge-${o.status}">${statusLabel(o.status)}</span></div>
+    <h3 style="font-size:15px;margin:20px 0 12px">معلومات العميل</h3>
+    <div class="order-detail-row"><span>الاسم</span><strong>${o.customer.name}</strong></div>
+    <div class="order-detail-row"><span>الهاتف</span><strong dir="ltr">${o.customer.phone}</strong></div>
+    <div class="order-detail-row"><span>الولاية</span><strong>${o.customer.wilaya}</strong></div>
+    <div class="order-detail-row"><span>البلدية</span><strong>${o.customer.commune}</strong></div>
+    <div class="order-detail-row"><span>طريقة التوصيل</span><strong>${o.customer.deliveryType === 'home' ? 'منزل' : 'مكتب'}</strong></div>
+    ${o.customer.notes ? `<div class="order-detail-row"><span>ملاحظات</span><strong>${o.customer.notes}</strong></div>` : ''}
+    <h3 style="font-size:15px;margin:20px 0 12px">المنتجات</h3>
+    <div class="order-items-list">
+      ${o.items.map(it => `<div class="order-item">
+        <img src="${it.img}" onerror="this.src='https://via.placeholder.com/100'">
+        <div class="order-item-info"><strong>${it.name}</strong><small>مقاس ${it.size} × ${it.qty}</small></div>
+        <div class="order-item-price">${(it.price * it.qty).toLocaleString('ar-DZ')} دج</div>
+      </div>`).join('')}
+    </div>
+    <div class="order-detail-row"><span>سعر المنتجات</span><strong>${o.subtotal.toLocaleString('ar-DZ')} دج</strong></div>
+    <div class="order-detail-row"><span>التوصيل</span><strong>${o.shipping.toLocaleString('ar-DZ')} دج</strong></div>
+    <div class="order-detail-row" style="font-size:16px;border-top:2px solid var(--line);margin-top:8px;padding-top:14px"><span>المجموع</span><strong style="color:var(--gold-dark)">${o.total.toLocaleString('ar-DZ')} دج</strong></div>
+  `;
+  document.getElementById('orderDetailModal').classList.add('show');
+}
+function closeOrderDetail(){ document.getElementById('orderDetailModal').classList.remove('show'); }
+
+/* ============================================================
+   DELIVERY
+   ============================================================ */
+async function loadDelivery(){
+  try {
+    const res = await fetch('/api/delivery');
+    adminDelivery = await res.json();
+    renderDeliveryTable();
+  } catch(err){
+    flash('❌ فشل تحميل أسعار التوصيل');
+  }
+}
+
+function renderDeliveryTable(){
+  adminDelivery.sort((a,b) => a.wilayaId - b.wilayaId);
+  document.getElementById('deliveryCount').textContent = `${adminDelivery.length} ولاية`;
+  document.getElementById('deliveryTableBody').innerHTML = adminDelivery.length ? adminDelivery.map(w => `
+    <tr>
+      <td><strong>${w.wilayaId}</strong></td>
+      <td><input class="delivery-name-input" value="${w.name}" data-id="${w.wilayaId}" data-field="name"></td>
+      <td><input type="number" class="delivery-row-input" value="${w.home}" min="0" data-id="${w.wilayaId}" data-field="home"></td>
+      <td><input type="number" class="delivery-row-input" value="${w.desk}" min="0" data-id="${w.wilayaId}" data-field="desk"></td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteWilaya(${w.wilayaId})">حذف</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:40px">لا توجد ولايات — اضغط "إضافة الولايات الافتراضية" للبدء</td></tr>';
+}
+
+async function saveDelivery(){
+  const inputs = document.querySelectorAll('.delivery-name-input, .delivery-row-input');
+  const updated = {};
+  inputs.forEach(input => {
+    const id = parseInt(input.dataset.id);
+    const field = input.dataset.field;
+    if(!updated[id]){
+      const existing = adminDelivery.find(d => d.wilayaId === id);
+      updated[id] = { wilayaId: id, name: existing.name, home: existing.home, desk: existing.desk };
+    }
+    if(field === 'name') updated[id].name = input.value.trim();
+    else updated[id][field] = parseInt(input.value) || 0;
+  });
+
+  try {
+    for(const w of Object.values(updated)){
+      await apiFetch(`/api/delivery/${w.wilayaId}`, { method: 'PUT', body: JSON.stringify(w) });
+    }
+    flash('✅ تم حفظ أسعار التوصيل');
+    await loadDelivery();
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+async function addWilaya(){
+  const maxId = adminDelivery.length ? Math.max(...adminDelivery.map(d => d.wilayaId)) : 0;
+  const newId = maxId + 1;
+  try {
+    await apiFetch(`/api/delivery/${newId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ wilayaId: newId, name: 'ولاية جديدة', home: 500, desk: 300 })
+    });
+    await loadDelivery();
+    flash('➕ أضفت ولاية جديدة — عدّل بياناتها');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+async function deleteWilaya(id){
+  if(!confirm('حذف هذه الولاية من قائمة التوصيل؟')) return;
+  try {
+    await apiFetch(`/api/delivery/${id}`, { method: 'DELETE' });
+    await loadDelivery();
+    flash('🗑️ تم حذف الولاية');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+const DEFAULT_WILAYAS = [
+  {wilayaId:1,name:'أدرار',home:900,desk:600},{wilayaId:2,name:'الشلف',home:450,desk:300},
+  {wilayaId:3,name:'الأغواط',home:600,desk:400},{wilayaId:4,name:'أم البواقي',home:500,desk:350},
+  {wilayaId:5,name:'باتنة',home:500,desk:350},{wilayaId:6,name:'بجاية',home:450,desk:300},
+  {wilayaId:7,name:'بسكرة',home:550,desk:350},{wilayaId:8,name:'بشار',home:800,desk:550},
+  {wilayaId:9,name:'البليدة',home:400,desk:250},{wilayaId:10,name:'البويرة',home:450,desk:300},
+  {wilayaId:11,name:'تمنراست',home:1000,desk:700},{wilayaId:12,name:'تبسة',home:550,desk:350},
+  {wilayaId:13,name:'تلمسان',home:500,desk:350},{wilayaId:14,name:'تيارت',home:500,desk:350},
+  {wilayaId:15,name:'تيزي وزو',home:450,desk:300},{wilayaId:16,name:'الجزائر',home:400,desk:250},
+  {wilayaId:17,name:'الجلفة',home:600,desk:400},{wilayaId:18,name:'جيجل',home:450,desk:300},
+  {wilayaId:19,name:'سطيف',home:450,desk:300},{wilayaId:20,name:'سعيدة',home:550,desk:350},
+  {wilayaId:21,name:'سكيكدة',home:450,desk:300},{wilayaId:22,name:'سيدي بلعباس',home:500,desk:350},
+  {wilayaId:23,name:'عنابة',home:450,desk:300},{wilayaId:24,name:'قالمة',home:500,desk:350},
+  {wilayaId:25,name:'قسنطينة',home:450,desk:300},{wilayaId:26,name:'المدية',home:450,desk:300},
+  {wilayaId:27,name:'مستغانم',home:500,desk:350},{wilayaId:28,name:'المسيلة',home:500,desk:350},
+  {wilayaId:29,name:'معسكر',home:500,desk:350},{wilayaId:30,name:'ورقلة',home:700,desk:450},
+  {wilayaId:31,name:'وهران',home:450,desk:300},{wilayaId:32,name:'البيض',home:650,desk:450},
+  {wilayaId:33,name:'إليزي',home:1100,desk:800},{wilayaId:34,name:'برج بوعريريج',home:450,desk:300},
+  {wilayaId:35,name:'بومرداس',home:400,desk:250},{wilayaId:36,name:'الطارف',home:500,desk:350},
+  {wilayaId:37,name:'تندوف',home:1200,desk:800},{wilayaId:38,name:'تيسمسيلت',home:550,desk:350},
+  {wilayaId:39,name:'الوادي',home:650,desk:450},{wilayaId:40,name:'خنشلة',home:550,desk:350},
+  {wilayaId:41,name:'سوق أهراس',home:550,desk:350},{wilayaId:42,name:'تيبازة',home:400,desk:250},
+  {wilayaId:43,name:'ميلة',home:450,desk:300},{wilayaId:44,name:'عين الدفلى',home:500,desk:350},
+  {wilayaId:45,name:'النعامة',home:650,desk:450},{wilayaId:46,name:'عين تموشنت',home:500,desk:350},
+  {wilayaId:47,name:'غرداية',home:700,desk:450},{wilayaId:48,name:'غليزان',home:500,desk:350},
+  {wilayaId:49,name:'تيميمون',home:900,desk:600},{wilayaId:50,name:'برج باجي مختار',home:1100,desk:800},
+  {wilayaId:51,name:'أولاد جلال',home:600,desk:400},{wilayaId:52,name:'بني عباس',home:900,desk:600},
+  {wilayaId:53,name:'عين صالح',home:1000,desk:700},{wilayaId:54,name:'عين قزام',home:1200,desk:800},
+  {wilayaId:55,name:'تقرت',home:650,desk:450},{wilayaId:56,name:'جانت',home:1200,desk:850},
+  {wilayaId:57,name:'المغير',home:650,desk:450},{wilayaId:58,name:'المنيعة',home:750,desk:500}
+];
+
+async function seedWilayas(){
+  if(!confirm('سيتم إضافة/تحديث الولايات الافتراضية الـ58. متابعة؟')) return;
+  try {
+    for(const w of DEFAULT_WILAYAS){
+      await apiFetch(`/api/delivery/${w.wilayaId}`, { method: 'PUT', body: JSON.stringify(w) });
+    }
+    await loadDelivery();
+    flash('✅ تم إضافة الولايات الافتراضية');
+  } catch(err){
+    flash('❌ ' + err.message);
+  }
+}
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function flash(msg){
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:30px;right:50%;transform:translate(50%,100px);background:#0a0a0a;color:#fff;padding:14px 26px;border-radius:999px;font-weight:700;font-size:14px;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:transform .4s cubic-bezier(.4,0,.2,1);font-family:Cairo,sans-serif;max-width:90vw';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.style.transform = 'translate(50%,0)');
+  setTimeout(() => { t.style.transform = 'translate(50%,100px)'; setTimeout(() => t.remove(), 400); }, 2800);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function initAdmin(){
+  await Promise.all([loadDashboard(), loadProducts(), loadOrders(), loadDelivery()]);
+}
+
+if(localStorage.getItem('vexar_token')) showAdmin();
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ closeProductForm(); closeOrderDetail(); }
+});
+
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('show'); });
+});
+</script>
+</body>
+</html>
